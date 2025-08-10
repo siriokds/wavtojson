@@ -189,8 +189,10 @@ if __name__ == "__main__":
     # Controlla se è stato fornito il parametro del file WAV
     if len(sys.argv) < 2 or len(sys.argv) > 3:
         print("Usage: python wavtojson.py <input_file.wav> [compression_type]")
+        print("       python wavtojson.py <input_file.json> (to convert back to WAV)")
         print("Example: python wavtojson.py miofile.wav")
         print("Example: python wavtojson.py miofile.wav gzip_base64")
+        print("Example: python wavtojson.py miofile.json (converts back to WAV)")
         print("")
         print("Compression types:")
         print("  none        - Store samples as JSON array (largest, most readable)")
@@ -198,20 +200,29 @@ if __name__ == "__main__":
         print("  gzip_base64 - Compress with gzip then base64 (smallest)")
         sys.exit(1)
     
-    input_wav = sys.argv[1]
-    compression = sys.argv[2] if len(sys.argv) == 3 else "base64"
-    
-    # Genera automaticamente il nome del file JSON
-    base_name = os.path.splitext(input_wav)[0]
-    output_json = f"{base_name}.json"
+    input_file = sys.argv[1]
+    file_ext = os.path.splitext(input_file)[1].lower()
     
     try:
-        # Converte WAV in JSON
-        print(f"Converting {input_wav} to {output_json}...")
-        wav_data = wav_to_json(input_wav, output_json, compression)
-        
-        # Opzionale: riconverti JSON in WAV per verifica
-        # json_to_wav(output_json, "reconstructed.wav")
+        if file_ext == '.json':
+            # Conversione da JSON a WAV
+            base_name = os.path.splitext(input_file)[0]
+            output_wav = f"{base_name}_reconstructed.wav"
+            print(f"Converting JSON back to WAV: {input_file} -> {output_wav}")
+            json_to_wav(input_file, output_wav)
+            
+        elif file_ext == '.wav':
+            # Conversione da WAV a JSON
+            compression = sys.argv[2] if len(sys.argv) == 3 else "base64"
+            base_name = os.path.splitext(input_file)[0]
+            output_json = f"{base_name}.json"
+            print(f"Converting WAV to JSON: {input_file} -> {output_json}")
+            wav_data = wav_to_json(input_file, output_json, compression)
+            
+        else:
+            print(f"Error: Unsupported file format '{file_ext}'")
+            print("Supported formats: .wav (input), .json (reverse conversion)")
+            sys.exit(1)
         
     except FileNotFoundError as e:
         print(f"Error: {e}")
